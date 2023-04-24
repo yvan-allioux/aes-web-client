@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES Encryption</title>
+    <style>
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #4CAF50;
+            color: #fff;
+            text-align: center;
+            padding: 16px;
+            margin: 0;
+        }
+
+        #aes-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px;
+        }
+
+        label {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        #text {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        #key {
+            width: 100%;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        button {
+            font-size: 18px;
+            border: none;
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 8px 16px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+        #result{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px;
+        }
+        #outputCopy {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 16px;
+        }
+
+        textarea,
+        input {
+            font-size: 18px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>AES Encryption</h1>
+    <form id="aes-form">
+        <label for="text">Message :</label>
+        <textarea id="text" rows="4" cols="50"></textarea><br>
+        <label for="key">Key :</label>
+        <input type="text" id="key"><br>
+        <button type="button" id="encrypt">Encrypt</button>
+        <button type="button" id="decrypt">Decrypt</button>
+        <button type="button" id="generate-key">New Key generation</button>
+    </form>
+    <div id="result">
+        <pre id="output"></pre>
+        <p id="outputCopy"></p>
+        <button onclick="copyTextFunctun()" type="button" class="btn copyButton">Copier</button>
+    </div>
+
+    <script>
+        async function encrypt_aes(plain_text, key) {
+            const iv = crypto.getRandomValues(new Uint8Array(16));
+            const cipher_text = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, new TextEncoder().encode(plain_text));
+            return { iv, cipher_text };
+        }
+
+        async function decrypt_aes(cipher_text, key, iv) {
+            const plain_text = await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, cipher_text);
+            return new TextDecoder().decode(plain_text);
+        }
+
+        async function generate_key() {
+            const key = await crypto.subtle.generateKey({ name: 'AES-CBC', length: 256 }, true, ['encrypt', 'decrypt']);
+            const key_exported = await crypto.subtle.exportKey('raw', key);
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(key_exported)));
+        }
+
+        async function encrypt_aes_base64(plain_text, key_user_input) {
+            const key = await crypto.subtle.importKey('raw', new Uint8Array(atob(key_user_input).split('').map(c => c.charCodeAt(0))), { name: 'AES-CBC', length: 256 }, true, ['encrypt', 'decrypt']);
+            const { iv, cipher_text } = await encrypt_aes(plain_text, key);
+            return btoa(String.fromCharCode.apply(null, new Uint8Array([...iv, ...new Uint8Array(cipher_text)])));
+        }
+
+        async function decrypt_aes_base64(encrypted_text, key_user_input) {
+            const data = new Uint8Array(atob(encrypted_text).split('').map(c => c.charCodeAt(0)));
+            const iv = data.slice(0, 16);
+            const encrypted_text_bytes = data.slice(16);
+            const key = await crypto.subtle.importKey('raw', new Uint8Array(atob(key_user_input).split('').map(c => c.charCodeAt(0))), { name: 'AES-CBC', length: 256 }, true, ['encrypt', 'decrypt']);
+            const decrypted_text = await decrypt_aes(encrypted_text_bytes, key, iv);
+            return decrypted_text;
+        }
+
+        const form = document.getElementById('aes-form');
+        const textInput = document.getElementById('text');
+        const keyInput = document.getElementById('key');
+        const encryptButton = document.getElementById('encrypt');
+        const decryptButton = document.getElementById('decrypt');
+        const generateKeyButton = document.getElementById('generate-key');
+        const output = document.getElementById('output');
+        const outputCopy = document.getElementById('outputCopy');
+
+        encryptButton.addEventListener('click', async () => {
+            const text_user_input = textInput.value;
+            const key_user_input = keyInput.value;
+
+            const final_cipher_text = await encrypt_aes_base64(text_user_input, key_user_input);
+            output.textContent = `IV + Texte chiffré :\n`;
+            outputCopy.textContent = `${final_cipher_text}`;
+
+        });
+
+        decryptButton.addEventListener('click', async () => {
+            const text_user_input = textInput.value;
+            const key_user_input = keyInput.value;
+
+            const decrypted_text = await decrypt_aes_base64(text_user_input, key_user_input);
+            output.textContent = `Texte déchiffré :\n`
+            outputCopy.textContent = `${decrypted_text}`;
+
+        });
+
+        generateKeyButton.addEventListener('click', async () => {
+            const key_base64 = await generate_key();
+            keyInput.value = key_base64;
+            output.textContent = `Clé en base64: `;
+            outputCopy.textContent = `${key_base64}`;
+        });
+
+        function copyTextFunctun() {
+            var copyText = document.getElementById('outputCopy').innerHTML;
+            navigator.clipboard.writeText(copyText);
+            document.querySelector(".copyButton").innerHTML = "Copied";
+        }
+
+    </script>
+</body>
+<footer>
+    <p>© 2023 - <a href="https://yvanallioux.fr/">Yvan Allioux</a></p>
+</footer>
+
+</html>
