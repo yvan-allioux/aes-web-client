@@ -80,6 +80,14 @@
             background-color: #fff;
             border: 1px solid #ccc;
             padding: 16px;
+            margin: 16px;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            word-break: break-all;
+            word-wrap: break-word;
         }
 
         textarea,
@@ -108,7 +116,7 @@
     </form>
     <div id="result">
         <pre id="output"></pre>
-        <p id="outputCopy"></p>
+        <div id="outputCopy"></div>
         <button onclick="copyTextFunctun()" type="button" class="btn copyButton">Copier</button>
     </div>
 
@@ -188,8 +196,12 @@
         }
 
     </script>
+
+    
 </body>
 <footer>
+    <p>This is a simple, browser-based AES encryption and decryption tool. It allows users to securely encrypt and decrypt messages using the Advanced Encryption Standard (AES) algorithm and a secret key. This tool is designed to provide confidentiality for sensitive data exchanged between parties.</p>
+    <p>Encrypt and decrypt messages using AES Generate secure AES-256 keys Easy-to-use, browser-based interface No server-side processing, ensuring data privacy</p>
     <p>© 2023 - <a href="https://yvanallioux.fr/">Yvan Allioux</a></p>
 </footer>
 
