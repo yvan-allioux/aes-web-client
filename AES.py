@@ -31,6 +31,19 @@ def decrypt_aes_base64(encrypted_text, key_user_input):
     decrypted_text = decrypt_aes(encrypted_text, key, iv)
     return decrypted_text
 
+#from Crypto.Hash import SHA256
+
+def hashStringIfPasswd(str):
+    if len(str) == 43:
+        return str
+    if len(str) == 44 and str[-1] == "=":
+        return str
+    print("warning: the key you entered is too short, it has been hashed with SHA-256 for having a length of 43 characters. ")
+    hash = SHA256.new(str.encode()).hexdigest()
+    hashSlice = hash[:43]
+    return hashSlice
+
+
 
 #interact with the user
 
